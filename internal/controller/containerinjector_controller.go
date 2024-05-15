@@ -19,12 +19,16 @@ package controller
 import (
 	"context"
 
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	applev1 "github.com/vishal2295/apple-operator/api/v1"
+	v1 "github.com/vishal2295/apple-operator/api/v1"
 )
 
 // ContainerInjectorReconciler reconciles a ContainerInjector object
@@ -58,5 +62,21 @@ func (r *ContainerInjectorReconciler) Reconcile(ctx context.Context, req ctrl.Re
 func (r *ContainerInjectorReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&applev1.ContainerInjector{}).
+		Watches(
+			&source.Kind{Type: &appsv1.Deployment{}},
+			handler.EnqueueRequestsFromMapFunc{r.GetAll}).
 		Complete(r)
+}
+
+func (r *ContainerInjectorReconciler) GetAll(o client.Object) []ctrl.Request {
+	result := []ctrl.Request{}
+
+	injectorList := v1.ContainerInjectorList{}
+	r.Client.List(context.Background(), &injectorList)
+
+	for _, labeler := range injectorList.Items {
+		result = append(result, ctrl.Request{NamespacedName: client.ObjectKey{Namespace: labeler.Namespace, Name: labeler.Name}})
+	}
+
+	return result
 }
