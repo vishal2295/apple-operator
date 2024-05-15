@@ -7,4 +7,14 @@ layout:
 - go.kubebuilder.io/v4
 projectName: apple-operator
 repo: github.com/vishal2295/apple-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: dev.vishal2295
+  group: apple
+  kind: ContainerInjector
+  path: github.com/vishal2295/apple-operator/api/v1
+  version: v1
 version: "3"
